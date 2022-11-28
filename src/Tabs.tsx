@@ -97,19 +97,19 @@ const Tabbing = ({
       const offset = Math.max(
         Math.min(
           event.clientX - grabX - con.offsetLeft,
-          tabListC.clientWidth +
-            tabListC.clientLeft -
+          tabListC.offsetWidth -
+            tabListC.offsetLeft -
             con.offsetLeft -
-            con.clientWidth
+            con.offsetWidth
         ),
-        0 - con.offsetLeft
+        0 - con.offsetLeft + tabListC.offsetLeft
       );
       const step = con.clientWidth / 2 + (offset > 0 ? 10 : -10);
       const fromOrigin = originX - event.clientX;
       const bumpBy = ~~(offset / step);
       if (bumpBy && Math.abs(fromOrigin) > 10 && bumpTab(bumpBy))
         setOriginX(event.clientX);
-      con.style.transform = `translateX(${offset}px)`;
+      con.style.transform = offset ? `translateX(${offset}px)` : "";
     };
 
     const mouseUpListener = (event: MouseEvent) => {
