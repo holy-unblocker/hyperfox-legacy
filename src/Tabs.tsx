@@ -40,7 +40,8 @@ const Tabbing = ({
   onClose,
 }: TabbingProps) => {
   const [mouseDown, setMouseDown] = useState(false);
-  const [origin, setOrigin] = useState<[number, number] | null>(null);
+  const origin = useRef<[number, number] | null>(null);
+  const moving = useRef(false);
   const [grabX, setGrabX] = useState<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
 
@@ -80,29 +81,22 @@ const Tabbing = ({
   useEffect(() => {
     const con = container.current;
     const tabListC = tabList.current;
+    const or = origin.current;
 
-    if (
-      !con ||
-      !tabListC ||
-      !mouseDown ||
-      !Array.isArray(origin) ||
-      typeof grabX !== "number"
-    )
+    if (!con || !tabListC || !mouseDown || !or || typeof grabX !== "number")
       return;
 
-    let moving = false;
-
     const listener = (event: MouseEvent) => {
-      if (!moving) {
-        // emulate sensitivity
-        if (
-          Math.hypot(event.clientX - origin[0], event.clientY - origin[1]) > 10
-        ) {
-          moving = true;
-          con.style.transition = "transform 0s";
-          document.documentElement.style.cursor = "grabbing";
-        } else return;
+      // emulate sensitivity
+      if (
+        !moving.current &&
+        Math.hypot(event.clientX - or[0], event.clientY - or[1]) > 10
+      ) {
+        moving.current = true;
+        con.style.transition = "transform 0s";
+        document.documentElement.style.cursor = "grabbing";
       }
+      if (!moving.current) return;
 
       const offset = Math.max(
         Math.min(
@@ -115,15 +109,19 @@ const Tabbing = ({
         0 - con.offsetLeft + tabListC.offsetLeft
       );
       const step = con.clientWidth / 2 + (offset > 0 ? 10 : -10);
-      const fromOrigin = origin[0] - event.clientX;
+      const fromOrigin = or[0] - event.clientX;
       const bumpBy = ~~(offset / step);
       if (bumpBy && Math.abs(fromOrigin) > 10 && bumpTab(bumpBy))
-        setOrigin([event.clientX, event.clientY]);
+        origin.current = [event.clientX, event.clientY];
       con.style.transform = offset ? `translateX(${offset}px)` : "";
     };
 
     const mouseUpListener = (event: MouseEvent) => {
       if (event.button !== 0) return;
+      document.documentElement.style.cursor = "";
+      con.style.transform = "";
+      con.style.transition = "";
+      moving.current = false;
       setMouseDown(false);
     };
 
@@ -131,9 +129,6 @@ const Tabbing = ({
     window.addEventListener("mouseup", mouseUpListener);
 
     return () => {
-      document.documentElement.style.cursor = "";
-      con.style.transform = "";
-      con.style.transition = "";
       window.removeEventListener("mousemove", listener);
       window.removeEventListener("mouseup", mouseUpListener);
     };
@@ -151,7 +146,7 @@ const Tabbing = ({
         onClick(event);
         if (event.buttons !== 1) return;
         setMouseDown(true);
-        setOrigin([event.clientX, event.clientY]);
+        origin.current = [event.clientX, event.clientY];
         setGrabX(event.clientX - event.currentTarget.offsetLeft);
       }}
     >
