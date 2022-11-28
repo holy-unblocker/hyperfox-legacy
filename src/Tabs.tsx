@@ -40,7 +40,7 @@ const Tabbing = ({
   onClose,
 }: TabbingProps) => {
   const [mouseDown, setMouseDown] = useState(false);
-  const [originX, setOriginX] = useState<number | null>(null);
+  const [origin, setOrigin] = useState<[number, number] | null>(null);
   const [grabX, setGrabX] = useState<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
 
@@ -85,15 +85,25 @@ const Tabbing = ({
       !con ||
       !tabListC ||
       !mouseDown ||
-      typeof originX !== "number" ||
+      !Array.isArray(origin) ||
       typeof grabX !== "number"
     )
       return;
 
-    document.documentElement.style.cursor = "grabbing";
-    con.style.transition = "transform 0s";
+    let moving = false;
 
     const listener = (event: MouseEvent) => {
+      if (!moving) {
+        // emulate sensitivity
+        if (
+          Math.hypot(event.clientX - origin[0], event.clientY - origin[1]) > 10
+        ) {
+          moving = true;
+          con.style.transition = "transform 0s";
+          document.documentElement.style.cursor = "grabbing";
+        } else return;
+      }
+
       const offset = Math.max(
         Math.min(
           event.clientX - grabX - con.offsetLeft,
@@ -105,10 +115,10 @@ const Tabbing = ({
         0 - con.offsetLeft + tabListC.offsetLeft
       );
       const step = con.clientWidth / 2 + (offset > 0 ? 10 : -10);
-      const fromOrigin = originX - event.clientX;
+      const fromOrigin = origin[0] - event.clientX;
       const bumpBy = ~~(offset / step);
       if (bumpBy && Math.abs(fromOrigin) > 10 && bumpTab(bumpBy))
-        setOriginX(event.clientX);
+        setOrigin([event.clientX, event.clientY]);
       con.style.transform = offset ? `translateX(${offset}px)` : "";
     };
 
@@ -127,7 +137,7 @@ const Tabbing = ({
       window.removeEventListener("mousemove", listener);
       window.removeEventListener("mouseup", mouseUpListener);
     };
-  }, [bumpTab, grabX, mouseDown, originX, tabList]);
+  }, [bumpTab, grabX, mouseDown, origin, tabList]);
 
   return (
     <div
@@ -141,7 +151,7 @@ const Tabbing = ({
         onClick(event);
         if (event.buttons !== 1) return;
         setMouseDown(true);
-        setOriginX(event.clientX);
+        setOrigin([event.clientX, event.clientY]);
         setGrabX(event.clientX - event.currentTarget.offsetLeft);
       }}
     >
