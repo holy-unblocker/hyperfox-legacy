@@ -1,0 +1,123 @@
+@function splitHex($color) {
+  @return (red($color)) + ", " + (green($color)) + ", " + (blue($color));
+}
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  user-select: none;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  background-color: #f0f0f4;
+  padding: 0px 2px;
+  width: auto;
+}
+
+.tabList {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  background-color: #f0f0f4;
+  // tabs are 36px, tabs is 44px
+  // (44-36)/2
+  padding: 4px 4px 4px 0px;
+  height: 36px;
+}
+
+.tab {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 36px;
+  // 221px real tab
+  width: calc(221px - (4px * 2));
+  overflow: hidden;
+  border-radius: 4px;
+  padding: 0px 4px 0px 9px;
+  --color: #{splitHex(#ffffff)};
+  background-color: rgb(var(--color));
+  transition: transform 0.1s ease;
+
+  .title {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: pre;
+  }
+
+  .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:not(.focused):hover {
+    --color: #{splitHex(#d8d8dc)};
+
+    .closeTab:hover {
+      --color: #{splitHex(#c4c4c9)};
+    }
+  }
+
+  &.focused {
+    z-index: 1;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+      rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+    --color: #{splitHex(#ffffff)};
+  }
+
+  > .closeTab {
+    justify-self: flex-end;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: rgb(var(--color));
+    border-radius: 4px;
+    margin-left: auto;
+
+    &:hover {
+      --color: #{splitHex(#e7e7e8)};
+    }
+  }
+}
+
+.tabContent {
+  display: none;
+  width: 100%;
+  height: 100%;
+
+  iframe {
+    border: none;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .systemTab {
+    margin: 20px;
+  }
+
+  &.focused {
+    display: flex;
+  }
+}
+
+.newTab {
+  width: 36px;
+  height: 36px;
+  margin: 4px 4px 4px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background-color: #f0f0f4;
+  border-radius: 4px;
+  flex: none;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: #e7e7e8;
+  }
+}
