@@ -5,7 +5,7 @@ import { SystemTab } from "../Content";
 const Home = forwardRef<RenderBackend>((props, ref) => {
   return (
     <SystemTab ref={ref} title="Homepage">
-      Welcome to HyperFox!
+      Welcome to HyperTabs!
     </SystemTab>
   );
 });
