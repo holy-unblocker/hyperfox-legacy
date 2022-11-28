@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import clsx from "clsx";
 import type { MouseEventHandler, MutableRefObject, ReactElement } from "react";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import type { RenderBackend } from "./Content";
-import ContentAuto from "./ContentAuto";
+import WebContent from "./Content";
 import styles from "./styles/Tabs.module.scss";
 
 interface Tab {
@@ -186,7 +185,7 @@ const Content = ({
 
   return (
     <div className={clsx(styles.tabContent, focused && styles.focused)}>
-      {tab.load && <ContentAuto ref={setRender} src={tab.src} />}
+      {tab.load && <WebContent ref={setRender} src={tab.src} />}
     </div>
   );
 };
@@ -212,7 +211,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     if (initialTabs)
       for (const src of initialTabs)
         newTabs.push({
-          src,
+          src: new URL(src).toString(),
           title: src,
           load: false,
           key: tabKey(newTabs),

@@ -1,14 +1,14 @@
 import { Helmet } from "react-helmet-async";
 
-const SystemNewTab = () => {
+const SystemHome = () => {
   return (
     <>
       <Helmet>
-        <title>New Tab</title>
+        <title>Home</title>
       </Helmet>
       <p>Welcome to HyperTabs!</p>
     </>
   );
 };
 
-export default SystemNewTab;
+export default SystemHome;

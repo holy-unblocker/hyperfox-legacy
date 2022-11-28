@@ -1,13 +1,14 @@
-import { forwardRef } from "react";
-import type { RenderBackend } from "../Content";
-import { SystemTab } from "../Content";
+import { Helmet } from "react-helmet-async";
 
-const Home = forwardRef<RenderBackend>((props, ref) => {
+const SystemSettings = () => {
   return (
-    <SystemTab ref={ref} title="Settings">
-      This is the settings page.
-    </SystemTab>
+    <>
+      <Helmet>
+        <title>Settings</title>
+      </Helmet>
+      <p>This is the settings page.</p>
+    </>
   );
-});
+};
 
-export default Home;
+export default SystemSettings;
