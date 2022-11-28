@@ -65,12 +65,6 @@ const Tabbing = ({
       con.style.transform = `translateX(${changeInX}px)`;
       con.style.transition = "transform 0s";
 
-      console.log(tab.src, "new con.offsetLeft:", {
-        order,
-        offsetLeft: con.offsetLeft,
-      });
-      // After the previous frame, remove
-      // the transistion to play the animationr
       requestAnimationFrame(() => {
         con.style.transform = "";
         con.style.transition = "";
@@ -267,7 +261,6 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
           const i = tabs.indexOf(tab);
           if ((by < 0 && i === 0) || (by > 0 && i === tabs.length - 1))
             return false;
-          console.log("bumping by", by, "from", i);
           const newTabs = [...tabs];
           newTabs.splice(i, 1);
           newTabs.splice(i + by, 0, tab);
