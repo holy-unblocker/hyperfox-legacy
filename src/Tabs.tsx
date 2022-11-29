@@ -1,6 +1,13 @@
 import clsx from "clsx";
 import type { MouseEventHandler, MutableRefObject, ReactElement } from "react";
-import { useLayoutEffect, useEffect, useRef, useState } from "react";
+import {
+  useLayoutEffect,
+  useEffect,
+  forwardRef,
+  useRef,
+  useState,
+  useImperativeHandle,
+} from "react";
 import type { RenderBackend } from "./Content";
 import WebContent, { translateOut } from "./Content";
 import styles from "./styles/Tabs.module.scss";
@@ -206,6 +213,47 @@ const tabKey = (tabs: Tab[]) => {
   throw new Error("Failure allocating key");
 };
 
+interface AddressBarProps {
+  address?: string;
+}
+
+interface AddressBarRef {
+  focus(): void;
+}
+
+const AddressBar = forwardRef<AddressBarRef, AddressBarProps>(
+  ({ address }, ref) => {
+    const [focused, setFocused] = useState(false);
+    const input = useRef<HTMLInputElement | null>(null);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => input.current?.focus(),
+      }),
+      [input]
+    );
+
+    useEffect(() => {
+      if (!input.current) return;
+
+      if (typeof address === "string" && !focused)
+        input.current.value = address;
+    }, [address, focused, input]);
+
+    return (
+      <div className={styles.address}>
+        <input
+          type="text"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          ref={input}
+        />
+      </div>
+    );
+  }
+);
+
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const tabList = useRef<HTMLDivElement | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -241,7 +289,6 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     tab.load = true;
     setFocusedTabKey(tab.key);
   };
-
   useEffect(() => {
     const resize = () => {
       setUiScale(
@@ -312,16 +359,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
   const focusedTab = tabs.find((tab) => tab.key === focusedTabKey);
 
-  const addressInput = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    console.log(
-      focusedTab,
-      tabs.filter((tab) => tab.key === focusedTabKey)
-    );
-    if (!addressInput.current || !focusedTab) return;
-    addressInput.current.value = focusedTab.address;
-  }, [addressInput, tabs, focusedTab, focusedTabKey]);
+  const addressBar = useRef<AddressBarRef | null>(null);
 
   return (
     <>
@@ -347,15 +385,14 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
             tabs.push(tab);
             setTabs([...tabs]);
             focusTab(tab);
+            addressBar.current?.focus();
           }}
         >
           +
         </button>
       </div>
       <div className={styles.browserBar}>
-        <div className={styles.address}>
-          <input type="text" ref={addressInput} />
-        </div>
+        <AddressBar ref={addressBar} address={focusedTab?.address} />
       </div>
       {content}
     </>
