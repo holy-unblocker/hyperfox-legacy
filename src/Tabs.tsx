@@ -302,7 +302,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
         <button
           className={styles.newTab}
           onClick={() => {
-            const src = "about:home";
+            const src = "about:newtab";
             const tab: Tab = {
               src,
               title: src,
