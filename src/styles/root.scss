@@ -1,3 +1,13 @@
+:root {
+  &.dragging {
+    cursor: grabbing;
+  }
+
+  iframe {
+    pointer-events: none;
+  }
+}
+
 body {
   margin: 0;
 }

@@ -87,7 +87,7 @@ const Tabbing = ({
       ) {
         moving.current = true;
         con.style.transition = "transform 0s";
-        document.documentElement.style.cursor = "grabbing";
+        document.documentElement.classList.add("dragging");
       }
       if (!moving.current) return;
 
@@ -111,7 +111,7 @@ const Tabbing = ({
 
     const mouseUpListener = (event: MouseEvent) => {
       if (event.button !== 0) return;
-      document.documentElement.style.cursor = "";
+      document.documentElement.classList.remove("dragging");
       con.style.transform = "";
       con.style.transition = "";
       moving.current = false;
