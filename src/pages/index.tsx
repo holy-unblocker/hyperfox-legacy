@@ -11,6 +11,7 @@ export default function TabApp() {
         initialTabs={[
           "about:home",
           "about:settings",
+          "https://youtube.com/",
           /*"about:settings",
         "about:settings",
         "about:settings",

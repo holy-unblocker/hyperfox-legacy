@@ -36,7 +36,7 @@ const WebContent = forwardRef<RenderBackend, { src: string }>(
       const interval = setInterval(() => {
         const window = iframe.current?.contentWindow;
         if (!window) return;
-        setTitle(window.document.title);
+        setTitle(window.document.title || src);
       }, 100);
 
       return () => clearInterval(interval);
@@ -81,7 +81,7 @@ export const translateOut = (url: string) => {
     }
   }
 
-  return url;
+  return __uv$config.prefix + __uv$config.encodeUrl(url);
 };
 
 export const translateIn = (url: string) => {
@@ -98,7 +98,9 @@ export const translateIn = (url: string) => {
     }
   }
 
-  return url;
+  if (!url.startsWith(__uv$config.prefix)) console.warn("Unknown tab URL");
+
+  return __uv$config.decodeUrl(url.slice(__uv$config.prefix.length));
 };
 
 export default WebContent;

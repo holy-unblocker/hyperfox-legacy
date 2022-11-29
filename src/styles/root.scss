@@ -1,10 +1,10 @@
 :root {
   &.dragging {
     cursor: grabbing;
-  }
 
-  iframe {
-    pointer-events: none;
+    iframe {
+      pointer-events: none;
+    }
   }
 }
 

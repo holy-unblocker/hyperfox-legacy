@@ -2,6 +2,7 @@
 const createBareServer = require("@tomphttp/bare-server-node");
 const { uvPath } = require("@titaniumnetwork-dev/ultraviolet");
 const express = require("express");
+const { join } = require("path");
 
 /**
  *
@@ -16,8 +17,8 @@ function setupProxy(app) {
     } else next();
   });
 
-  // add our config after CRA adds it's own express.static
-  setTimeout(() => app.use("/uv/", express.static(uvPath)));
+  app.use("/uv/", express.static(join(__dirname, "..", "public", "uv")));
+  app.use("/uv/", express.static(uvPath));
 }
 
 module.exports = setupProxy;
