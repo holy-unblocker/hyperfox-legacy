@@ -1,12 +1,17 @@
+import { Helmet } from "react-helmet-async";
 import Tabs from "../Tabs";
 
 export default function TabApp() {
   return (
-    <Tabs
-      initialTabs={[
-        "about:home",
-        "about:settings",
-        /*"about:settings",
+    <>
+      <Helmet>
+        <title>HyperTabs</title>
+      </Helmet>
+      <Tabs
+        initialTabs={[
+          "about:home",
+          "about:settings",
+          /*"about:settings",
         "about:settings",
         "about:settings",
         "about:settings",
@@ -16,10 +21,11 @@ export default function TabApp() {
         "about:settings",
         "about:settings",
         "about:settings",*/
-        "https://holyubofficial.net/",
-        "https://holyubofficial.net/proxy.html",
-        // "https://holyubofficial.net/terms.html",
-      ]}
-    />
+          "https://holyubofficial.net/",
+          "https://holyubofficial.net/proxy.html",
+          // "https://holyubofficial.net/terms.html",
+        ]}
+      />
+    </>
   );
 }

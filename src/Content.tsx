@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from "react";
 import styles from "./styles/Tabs.module.scss";
 
 export interface RenderBackend {
@@ -23,7 +29,18 @@ export const SystemTab = forwardRef<
 
 const WebContent = forwardRef<RenderBackend, { src: string }>(
   ({ src }, ref) => {
-    const [title] = useState(src);
+    const [title, setTitle] = useState(src);
+    const iframe = useRef<HTMLIFrameElement | null>(null);
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        const window = iframe.current?.contentWindow;
+        if (!window) return;
+        setTitle(window.document.title);
+      }, 100);
+
+      return () => clearInterval(interval);
+    });
 
     useImperativeHandle(
       ref,
@@ -33,10 +50,8 @@ const WebContent = forwardRef<RenderBackend, { src: string }>(
       [title]
     );
 
-    console.log(src, translateOut(src));
-
     // eslint-disable-next-line jsx-a11y/iframe-has-title
-    return <iframe src={translateOut(src)} />;
+    return <iframe ref={iframe} src={translateOut(src)} />;
   }
 );
 
@@ -53,7 +68,6 @@ const systemSettings = new URL(
 export const translateOut = (url: string) => {
   const u = new URL(url);
 
-  console.log(u.protocol, u.pathname);
   if (u.protocol === "about:" && u.hostname === "") {
     switch (u.pathname) {
       case "blank":
