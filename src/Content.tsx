@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import {
   useEffect,
   useRef,
@@ -6,54 +5,11 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import styles from "./styles/Tabs.module.scss";
 
 export interface RenderBackend {
   title: string;
+  address: string;
 }
-
-export const SystemTab = forwardRef<
-  RenderBackend,
-  { title: string; icon?: string; children: ReactNode }
->(({ title, children }, ref) => {
-  useImperativeHandle(
-    ref,
-    () => ({
-      title,
-    }),
-    [title]
-  );
-
-  return <div className={styles.systemTab}>{children}</div>;
-});
-
-const WebContent = forwardRef<RenderBackend, { src: string }>(
-  ({ src }, ref) => {
-    const [title, setTitle] = useState(src);
-    const iframe = useRef<HTMLIFrameElement | null>(null);
-
-    useEffect(() => {
-      const interval = setInterval(() => {
-        const window = iframe.current?.contentWindow;
-        if (!window) return;
-        setTitle(window.document.title || src);
-      }, 100);
-
-      return () => clearInterval(interval);
-    });
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        title,
-      }),
-      [title]
-    );
-
-    // eslint-disable-next-line jsx-a11y/iframe-has-title
-    return <iframe ref={iframe} src={translateOut(src)} />;
-  }
-);
 
 const systemHome = new URL("./system/home.html", global.location.toString());
 const systemNewTab = new URL(
@@ -65,6 +21,13 @@ const systemSettings = new URL(
   global.location.toString()
 );
 
+const uvAbsolute = global.location.origin + __uv$config.prefix;
+
+/**
+ *
+ * @param url Clean printable string
+ * @returns IFrame/Proxied SRC
+ */
 export const translateOut = (url: string) => {
   const u = new URL(url);
 
@@ -81,9 +44,14 @@ export const translateOut = (url: string) => {
     }
   }
 
-  return __uv$config.prefix + __uv$config.encodeUrl(url);
+  return uvAbsolute + __uv$config.encodeUrl(url);
 };
 
+/**
+ *
+ * @param url IFrame/Proxied SRC
+ * @returns Clean printable string
+ */
 export const translateIn = (url: string) => {
   const u = new URL(url);
 
@@ -98,9 +66,48 @@ export const translateIn = (url: string) => {
     }
   }
 
-  if (!url.startsWith(__uv$config.prefix)) console.warn("Unknown tab URL");
+  if (!url.startsWith(uvAbsolute)) {
+    console.warn("Unknown tab URL");
+    return url;
+  }
 
-  return __uv$config.decodeUrl(url.slice(__uv$config.prefix.length));
+  return __uv$config.decodeUrl(url.slice(uvAbsolute.length));
 };
+
+const WebContent = forwardRef<RenderBackend, { src: string }>(
+  ({ src }, ref) => {
+    const [title, setTitle] = useState(translateIn(src));
+    const [address, setAddress] = useState(title);
+    const iframe = useRef<HTMLIFrameElement | null>(null);
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        const window = iframe.current?.contentWindow;
+        if (!window) return;
+        const nativeLocation = Object.getOwnPropertyDescriptor(
+          window,
+          "location"
+        )!.get!.call(window) as Location;
+        const location = translateIn(nativeLocation.toString());
+        setTitle(window.document.title || location);
+        setAddress(location);
+      }, 100);
+
+      return () => clearInterval(interval);
+    });
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        title,
+        address,
+      }),
+      [title, address]
+    );
+
+    // eslint-disable-next-line jsx-a11y/iframe-has-title
+    return <iframe ref={iframe} src={src} />;
+  }
+);
 
 export default WebContent;

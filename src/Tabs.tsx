@@ -2,11 +2,12 @@ import clsx from "clsx";
 import type { MouseEventHandler, MutableRefObject, ReactElement } from "react";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import type { RenderBackend } from "./Content";
-import WebContent from "./Content";
+import WebContent, { translateOut } from "./Content";
 import styles from "./styles/Tabs.module.scss";
 
 interface Tab {
   src: string;
+  address: string;
   title: string;
   icon?: string;
   key: number;
@@ -175,12 +176,16 @@ const Content = ({
   useEffect(() => {
     if (!render) return;
 
-    if (render.title !== tab.title) {
+    let updated = false;
+
+    for (const key of ["title", "address"] as (keyof RenderBackend)[])
+      if (render[key] !== tab[key]) updated = true;
+
+    if (updated)
       setTab({
         ...tab,
-        title: render.title,
+        ...render,
       });
-    }
   }, [render, setTab, tab]);
 
   return (
@@ -210,19 +215,23 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     const newTabs: Tab[] = [];
 
     if (initialTabs)
-      for (const src of initialTabs)
+      for (const src of initialTabs) {
+        const formed = new URL(src).toString();
+
         newTabs.push({
-          src: new URL(src).toString(),
+          src: translateOut(formed),
+          address: formed,
           title: src,
           load: false,
           key: tabKey(newTabs),
         });
+      }
 
     setTabs(newTabs);
     if (newTabs[0]) focusTab(newTabs[0]);
   }, [initialTabs]);
 
-  const [focusedTab, setFocusedTab] = useState<number | null>(null);
+  const [focusedTabKey, setFocusedTabKey] = useState<number | null>(null);
   const [bumpedTab, setBumpedTab] = useState<number | null>(null);
 
   const tabbing: ReactElement<typeof Tabbing>[] = [];
@@ -230,7 +239,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
   const focusTab = (tab: Tab) => {
     tab.load = true;
-    setFocusedTab(tab.key);
+    setFocusedTabKey(tab.key);
   };
 
   useEffect(() => {
@@ -249,7 +258,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
     const destroyTab = () => {
       setTabs([...tabs.filter((t) => t.key !== tab.key)]);
-      if (focusedTab === tab.key) {
+      if (focusedTabKey === tab.key) {
         const i = tabs.indexOf(tab);
         focusTab(tabs[i - 1] || tabs[i + 1] || null);
       }
@@ -279,7 +288,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
           setBumpedTab(tab.key);
           return true;
         }}
-        focused={focusedTab === tab.key}
+        focused={focusedTabKey === tab.key}
         onClick={(event) => {
           if (event.buttons === 4) destroyTab();
           else if (event.buttons === 1) focusTab(tab);
@@ -295,11 +304,24 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
       <Content
         tab={tab}
         setTab={setTab}
-        focused={focusedTab === tab.key}
+        focused={focusedTabKey === tab.key}
         key={tab.key}
       />
     );
   }
+
+  const focusedTab = tabs.find((tab) => tab.key === focusedTabKey);
+
+  const addressInput = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    console.log(
+      focusedTab,
+      tabs.filter((tab) => tab.key === focusedTabKey)
+    );
+    if (!addressInput.current || !focusedTab) return;
+    addressInput.current.value = focusedTab.address;
+  }, [addressInput, tabs, focusedTab, focusedTabKey]);
 
   return (
     <>
@@ -316,7 +338,8 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
           onClick={() => {
             const src = "about:newtab";
             const tab: Tab = {
-              src,
+              src: translateOut(src),
+              address: src,
               title: src,
               load: false,
               key: tabKey(tabs),
@@ -328,6 +351,11 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
         >
           +
         </button>
+      </div>
+      <div className={styles.browserBar}>
+        <div className={styles.address}>
+          <input type="text" ref={addressInput} />
+        </div>
       </div>
       {content}
     </>
