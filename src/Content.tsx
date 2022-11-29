@@ -1,15 +1,23 @@
-import {
-  useEffect,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from "react";
+import type { MutableRefObject } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { getDocumentTitle } from "./contextNatives";
 
-export interface RenderBackend {
-  title: string;
+export interface Tab {
+  src: string;
   address: string;
+  title: string;
+  icon?: string;
+  key: number;
+  /**
+   * If the tab was ever focused and should load the content.
+   */
+  load: boolean;
+  contentRef: MutableRefObject<WebContentRef | null>;
+}
+
+export interface WebContentRef {
+  //
+  navigate(): void;
 }
 
 const systemHome = new URL("./system/home.html", global.location.toString());
@@ -75,36 +83,42 @@ export const translateIn = (url: string) => {
   return __uv$config.decodeUrl(url.slice(uvAbsolute.length));
 };
 
-const WebContent = forwardRef<RenderBackend, { src: string }>(
-  ({ src }, ref) => {
-    const [title, setTitle] = useState(translateIn(src));
-    const [address, setAddress] = useState(title);
-    const iframe = useRef<HTMLIFrameElement | null>(null);
-
-    useEffect(() => {
-      const interval = setInterval(() => {
-        const window = iframe.current?.contentWindow;
-        if (!window) return;
-        const location = translateIn(window.location.toString());
-        setTitle(getDocumentTitle(window.document) || location);
-        setAddress(location);
-      }, 100);
-
-      return () => clearInterval(interval);
-    });
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        title,
-        address,
-      }),
-      [title, address]
-    );
-
-    // eslint-disable-next-line jsx-a11y/iframe-has-title
-    return <iframe ref={iframe} src={src} />;
+const WebContent = forwardRef<
+  WebContentRef,
+  {
+    tab: Tab;
+    setTab: (tab: Tab) => void;
   }
-);
+>(({ tab, setTab }, ref) => {
+  const iframe = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const window = iframe.current?.contentWindow;
+      if (!window) return;
+      const location = translateIn(window.location.toString());
+      setTab({
+        ...tab,
+        title: getDocumentTitle(window.document) || location,
+        address: location,
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  });
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      navigate: () => {
+        //
+      },
+    }),
+    []
+  );
+
+  // eslint-disable-next-line jsx-a11y/iframe-has-title
+  return <iframe ref={iframe} src={tab.src} />;
+});
 
 export default WebContent;

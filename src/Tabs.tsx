@@ -1,6 +1,12 @@
 import clsx from "clsx";
-import type { MouseEventHandler, MutableRefObject, ReactElement } from "react";
+import type {
+  MouseEventHandler,
+  MutableRefObject,
+  ReactElement,
+  ReactNode,
+} from "react";
 import {
+  createRef,
   useLayoutEffect,
   useEffect,
   forwardRef,
@@ -8,21 +14,9 @@ import {
   useState,
   useImperativeHandle,
 } from "react";
-import type { RenderBackend } from "./Content";
+import type { WebContentRef, Tab } from "./Content";
 import WebContent, { translateOut } from "./Content";
 import styles from "./styles/Tabs.module.scss";
-
-interface Tab {
-  src: string;
-  address: string;
-  title: string;
-  icon?: string;
-  key: number;
-  /**
-   * If the tab was ever focused and should load the content.
-   */
-  load: boolean;
-}
 
 interface TabbingProps {
   tab: Tab;
@@ -169,39 +163,6 @@ const Tabbing = ({
   );
 };
 
-const Content = ({
-  tab,
-  setTab,
-  focused,
-}: {
-  tab: Tab;
-  setTab: (tab: Tab) => void;
-  focused: boolean;
-}) => {
-  const [render, setRender] = useState<RenderBackend | null>(null);
-
-  useEffect(() => {
-    if (!render) return;
-
-    let updated = false;
-
-    for (const key of ["title", "address"] as (keyof RenderBackend)[])
-      if (render[key] !== tab[key]) updated = true;
-
-    if (updated)
-      setTab({
-        ...tab,
-        ...render,
-      });
-  }, [render, setTab, tab]);
-
-  return (
-    <div className={clsx(styles.tabContent, focused && styles.focused)}>
-      {tab.load && <WebContent ref={setRender} src={tab.src} />}
-    </div>
-  );
-};
-
 // createTab(src, tabs, setTabs)
 
 const tabKey = (tabs: Tab[]) => {
@@ -263,13 +224,16 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     if (initialTabs)
       for (const src of initialTabs) {
         const formed = new URL(src).toString();
-
+        const ref =
+          createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
+        ref.current = null;
         newTabs.push({
           src: translateOut(formed),
           address: formed,
           title: src,
           load: false,
           key: tabKey(newTabs),
+          contentRef: ref,
         });
       }
 
@@ -281,7 +245,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const [bumpedTab, setBumpedTab] = useState<number | null>(null);
 
   const tabbing: ReactElement<typeof Tabbing>[] = [];
-  const content: ReactElement<typeof Content>[] = [];
+  const content: ReactNode[] = [];
 
   const focusTab = (tab: Tab) => {
     tab.load = true;
@@ -315,6 +279,8 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
       setTabs([...tabs]);
     };
 
+    const focused = focusedTabKey === tab.key;
+
     tabbing.push(
       <Tabbing
         tab={tab}
@@ -333,7 +299,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
           setBumpedTab(tab.key);
           return true;
         }}
-        focused={focusedTabKey === tab.key}
+        focused={focused}
         onClick={(event) => {
           if (event.buttons === 4) destroyTab();
           else if (event.buttons === 1) focusTab(tab);
@@ -346,12 +312,11 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     // preserve order of content
     // react will reattach the iframe regardless of whatever we do to preserve the value (same keys, memo()) and will break the content
     content[tab.key] = (
-      <Content
-        tab={tab}
-        setTab={setTab}
-        focused={focusedTabKey === tab.key}
-        key={tab.key}
-      />
+      <div className={clsx(styles.tabContent, focused && styles.focused)}>
+        {tab.load && (
+          <WebContent ref={tab.contentRef} tab={tab} setTab={setTab} />
+        )}
+      </div>
     );
   }
 
@@ -373,12 +338,16 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
           className={styles.newTab}
           onClick={() => {
             const src = "about:newtab";
+            const ref =
+              createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
+            ref.current = null;
             const tab: Tab = {
               src: translateOut(src),
               address: src,
               title: src,
               load: false,
               key: tabKey(tabs),
+              contentRef: ref,
             };
             tabs.push(tab);
             setTabs([...tabs]);
