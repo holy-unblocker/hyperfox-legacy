@@ -204,6 +204,7 @@ const tabKey = (tabs: Tab[]) => {
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const tabList = useRef<HTMLDivElement | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([]);
+  const [uiScale, setUiScale] = useState(0);
 
   useEffect(() => {
     const newTabs: Tab[] = [];
@@ -231,6 +232,17 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     tab.load = true;
     setFocusedTab(tab.key);
   };
+
+  useEffect(() => {
+    const resize = () => {
+      setUiScale(
+        (tabList.current?.children[0]?.clientWidth || 0) < 150 ? 1 : 0
+      );
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [tabs]);
 
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
@@ -291,7 +303,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
   return (
     <>
-      <div className={styles.tabs}>
+      <div className={styles.tabs} data-scale={uiScale}>
         <div
           className={styles.tabList}
           ref={tabList}
