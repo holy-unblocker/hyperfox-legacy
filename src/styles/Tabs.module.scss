@@ -125,3 +125,24 @@
     background-color: #e7e7e8;
   }
 }
+
+.navBar {
+  height: 34px;
+  padding: 3px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+
+  .addressBar {
+    width: 100%;
+    height: 100%;
+    padding: 0px 10px;
+    line-height: 34px;
+    background-color: #f0f0f4;
+    border: none;
+    border-radius: 4px;
+    // todo: make a tab-accessibility mode
+    outline: none;
+  }
+}

@@ -5,6 +5,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
+import { getDocumentTitle } from "./contextNatives";
 
 export interface RenderBackend {
   title: string;
@@ -84,12 +85,8 @@ const WebContent = forwardRef<RenderBackend, { src: string }>(
       const interval = setInterval(() => {
         const window = iframe.current?.contentWindow;
         if (!window) return;
-        const nativeLocation = Object.getOwnPropertyDescriptor(
-          window,
-          "location"
-        )!.get!.call(window) as Location;
-        const location = translateIn(nativeLocation.toString());
-        setTitle(window.document.title || location);
+        const location = translateIn(window.location.toString());
+        setTitle(getDocumentTitle(window.document) || location);
         setAddress(location);
       }, 100);
 

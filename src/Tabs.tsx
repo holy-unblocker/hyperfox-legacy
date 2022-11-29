@@ -213,46 +213,44 @@ const tabKey = (tabs: Tab[]) => {
   throw new Error("Failure allocating key");
 };
 
-interface AddressBarProps {
+interface NavBarProps {
   address?: string;
 }
 
-interface AddressBarRef {
+interface NavBarRef {
   focus(): void;
 }
 
-const AddressBar = forwardRef<AddressBarRef, AddressBarProps>(
-  ({ address }, ref) => {
-    const [focused, setFocused] = useState(false);
-    const input = useRef<HTMLInputElement | null>(null);
+const NavBar = forwardRef<NavBarRef, NavBarProps>(({ address }, ref) => {
+  const [focused, setFocused] = useState(false);
+  const input = useRef<HTMLInputElement | null>(null);
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        focus: () => input.current?.focus(),
-      }),
-      [input]
-    );
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => input.current?.focus(),
+    }),
+    [input]
+  );
 
-    useEffect(() => {
-      if (!input.current) return;
+  useEffect(() => {
+    if (!input.current) return;
 
-      if (typeof address === "string" && !focused)
-        input.current.value = address;
-    }, [address, focused, input]);
+    if (typeof address === "string" && !focused) input.current.value = address;
+  }, [address, focused, input]);
 
-    return (
-      <div className={styles.address}>
-        <input
-          type="text"
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          ref={input}
-        />
-      </div>
-    );
-  }
-);
+  return (
+    <div className={styles.navBar}>
+      <input
+        className={styles.addressBar}
+        type="text"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        ref={input}
+      />
+    </div>
+  );
+});
 
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const tabList = useRef<HTMLDivElement | null>(null);
@@ -359,7 +357,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
   const focusedTab = tabs.find((tab) => tab.key === focusedTabKey);
 
-  const addressBar = useRef<AddressBarRef | null>(null);
+  const navBar = useRef<NavBarRef | null>(null);
 
   return (
     <>
@@ -385,14 +383,14 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
             tabs.push(tab);
             setTabs([...tabs]);
             focusTab(tab);
-            addressBar.current?.focus();
+            navBar.current?.focus();
           }}
         >
           +
         </button>
       </div>
       <div className={styles.browserBar}>
-        <AddressBar ref={addressBar} address={focusedTab?.address} />
+        <NavBar ref={navBar} address={focusedTab?.address} />
       </div>
       {content}
     </>
