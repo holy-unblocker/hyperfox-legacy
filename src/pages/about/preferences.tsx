@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 
-const SystemSettings = () => {
+const AboutPreferences = () => {
   return (
     <>
       <Helmet>
@@ -11,4 +11,4 @@ const SystemSettings = () => {
   );
 };
 
-export default SystemSettings;
+export default AboutPreferences;
