@@ -1,6 +1,10 @@
 import type { MutableRefObject } from "react";
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import { getDocumentTitle } from "./contextNatives";
+import {
+  getDocumentQuerySelector,
+  getDocumentTitle,
+  getHTMLLinkElementHref,
+} from "./contextNatives";
 
 export interface Tab {
   src: string;
@@ -8,6 +12,7 @@ export interface Tab {
   title: string;
   icon?: string;
   key: number;
+  shouldFocus: boolean;
   /**
    * If the tab was ever focused and should load the content.
    */
@@ -20,13 +25,10 @@ export interface WebContentRef {
   navigate(): void;
 }
 
-const systemHome = new URL("./system/home.html", global.location.toString());
-const systemNewTab = new URL(
-  "./system/newtab.html",
-  global.location.toString()
-);
+const systemHome = new URL("./about/home.html", global.location.toString());
+const systemNewTab = new URL("./about/newtab.html", global.location.toString());
 const systemSettings = new URL(
-  "./system/settings.html",
+  "./about/settings.html",
   global.location.toString()
 );
 
@@ -62,6 +64,11 @@ export const translateOut = (url: string) => {
  * @returns Clean printable string
  */
 export const translateIn = (url: string) => {
+  try {
+    new URL(url);
+  } catch (err) {
+    console.trace("BAD URL", url);
+  }
   const u = new URL(url);
 
   if (u.origin === global.location.origin) {
@@ -75,12 +82,12 @@ export const translateIn = (url: string) => {
     }
   }
 
-  if (!url.startsWith(uvAbsolute)) {
-    console.warn("Unknown tab URL");
-    return url;
-  }
+  if (url.startsWith(uvAbsolute))
+    return __uv$config.decodeUrl(url.slice(uvAbsolute.length));
 
-  return __uv$config.decodeUrl(url.slice(uvAbsolute.length));
+  // console.warn("Unknown tab URL");
+
+  return url;
 };
 
 const WebContent = forwardRef<
@@ -96,11 +103,31 @@ const WebContent = forwardRef<
     const interval = setInterval(() => {
       const window = iframe.current?.contentWindow;
       if (!window) return;
-      const location = translateIn(window.location.toString());
+      const realLocation = new URL(window.location.toString());
+      const location = new URL(translateIn(realLocation.toString()));
+
+      let icon: string | undefined;
+
+      const querySelector = getDocumentQuerySelector(window.document);
+      const iconSelector = querySelector<HTMLLinkElement>('link[rel*="icon"]');
+      const href = iconSelector && getHTMLLinkElementHref(iconSelector);
+      if (href) icon = translateIn(href);
+      else
+        try {
+          icon = new URL("/favicon.ico", location).toString();
+        } catch (err) {
+          // :blank?
+          if (realLocation.protocol !== "about:") {
+            // location is possibly about: url
+            icon = new URL("/favicon.ico", realLocation).toString();
+          }
+        }
+
       setTab({
         ...tab,
-        title: getDocumentTitle(window.document) || location,
-        address: location,
+        icon,
+        title: getDocumentTitle(window.document) || location.toString(),
+        address: location.toString(),
       });
     }, 100);
 

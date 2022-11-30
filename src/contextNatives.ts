@@ -12,6 +12,8 @@ const documentTitle = Object.getOwnPropertyDescriptor(
   "title"
 )! as BoundGet<string, Document>;
 
+const { querySelector } = Document.prototype;
+
 const nativeHistory = Object.getOwnPropertyDescriptor(
   window,
   "history"
@@ -32,6 +34,17 @@ const historyScrollRestoration = Object.getOwnPropertyDescriptor(
   "scrollRestoration"
 )! as BoundGet<ScrollRestoration, History> &
   BoundSet<ScrollRestoration, History>;
+
+const HTMLLinkElementHref = Object.getOwnPropertyDescriptor(
+  HTMLLinkElement.prototype,
+  "href"
+)! as BoundGet<string, HTMLLinkElement> & BoundSet<string, HTMLLinkElement>;
+
+export const getHTMLLinkElementHref = (link: HTMLLinkElement) =>
+  HTMLLinkElementHref.get.call(link);
+
+export const getDocumentQuerySelector = (document: Document) =>
+  querySelector.bind(document);
 
 export const getDocumentTitle = (document: Document) =>
   documentTitle.get.call(document);

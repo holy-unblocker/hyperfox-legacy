@@ -43,6 +43,12 @@
   background-color: rgb(var(--color));
   transition: transform 0.1s ease;
 
+  .icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+  }
+
   .title {
     text-overflow: ellipsis;
     overflow: hidden;

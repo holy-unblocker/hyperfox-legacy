@@ -8,6 +8,7 @@ import type {
 import {
   createRef,
   useLayoutEffect,
+  useCallback,
   useEffect,
   forwardRef,
   useRef,
@@ -175,7 +176,7 @@ const tabKey = (tabs: Tab[]) => {
 };
 
 interface NavBarRef {
-  focus(): void;
+  focusAddressBar(): void;
 }
 
 const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
@@ -186,7 +187,7 @@ const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
     useImperativeHandle(
       ref,
       () => ({
-        focus: () => input.current?.focus(),
+        focusAddressBar: () => input.current?.focus(),
       }),
       [input]
     );
@@ -209,7 +210,6 @@ const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
             const ref =
               createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
             ref.current = null;
-
             setTab({
               ...tab,
               src: translateOut(formed),
@@ -230,6 +230,23 @@ const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
   }
 );
 
+const createTab = (src: string, tl: Tab[]): Tab => {
+  const formed = new URL(src).toString();
+  const ref =
+    createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
+  ref.current = null;
+
+  return {
+    src: translateOut(formed),
+    address: formed,
+    title: formed,
+    load: false,
+    shouldFocus: false,
+    key: tabKey(tl),
+    contentRef: ref,
+  };
+};
+
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const tabList = useRef<HTMLDivElement | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -240,18 +257,9 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
     if (initialTabs)
       for (const src of initialTabs) {
-        const formed = new URL(src).toString();
-        const ref =
-          createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
-        ref.current = null;
-        newTabs.push({
-          src: translateOut(formed),
-          address: formed,
-          title: formed,
-          load: false,
-          key: tabKey(newTabs),
-          contentRef: ref,
-        });
+        const tab = createTab(src, newTabs);
+        tab.shouldFocus = true;
+        newTabs.push(tab);
       }
 
     setTabs(newTabs);
@@ -266,8 +274,10 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
   const focusTab = (tab: Tab) => {
     tab.load = true;
+    tab.shouldFocus = true;
     setFocusedTabKey(tab.key);
   };
+
   useEffect(() => {
     const resize = () => {
       setUiScale(
@@ -279,12 +289,15 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     return () => window.removeEventListener("resize", resize);
   }, [tabs]);
 
-  const setSomeTab = (tab: Tab | void, newTab: Tab) => {
-    if (!tab) return;
-    const i = tabs.indexOf(tab);
-    if (i !== -1) tabs[i] = newTab;
-    setTabs([...tabs]);
-  };
+  const setSomeTab = useCallback(
+    (tab: Tab | void, newTab: Tab) => {
+      if (!tab) return;
+      const i = tabs.indexOf(tab);
+      if (i !== -1) tabs[i] = newTab;
+      setTabs([...tabs]);
+    },
+    [tabs]
+  );
 
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
@@ -332,20 +345,30 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     // preserve order of content
     // react will reattach the iframe regardless of whatever we do to preserve the value (same keys, memo()) and will break the content
     content[tab.key] = (
-      <div className={clsx(styles.tabContent, focused && styles.focused)}>
+      <div
+        className={clsx(styles.tabContent, focused && styles.focused)}
+        key={tab.key}
+      >
         {tab.load && (
-          <WebContent
-            ref={tab.contentRef}
-            tab={tab}
-            setTab={setTab}
-            key={tab.key}
-          />
+          <WebContent ref={tab.contentRef} tab={tab} setTab={setTab} />
         )}
       </div>
     );
   }
 
   const focusedTab = tabs.find((tab) => tab.key === focusedTabKey);
+
+  useEffect(() => {
+    if (!focusedTab || !navBar.current) return;
+
+    if (focusedTab.shouldFocus) {
+      navBar.current.focusAddressBar();
+      setSomeTab(focusedTab, {
+        ...focusedTab,
+        shouldFocus: false,
+      });
+    }
+  }, [focusedTab, setSomeTab]);
 
   const navBar = useRef<NavBarRef | null>(null);
 
@@ -362,22 +385,12 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
         <button
           className={styles.newTab}
           onClick={() => {
-            const src = "about:newtab";
-            const ref =
-              createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
-            ref.current = null;
-            const tab: Tab = {
-              src: translateOut(src),
-              address: src,
-              title: src,
-              load: false,
-              key: tabKey(tabs),
-              contentRef: ref,
-            };
-            tabs.push(tab);
-            setTabs([...tabs]);
+            const newTabs = [...tabs];
+            const tab = createTab("about:newtab", newTabs);
+            newTabs.push(tab);
+            tab.shouldFocus = true;
+            setTabs(tabs);
             focusTab(tab);
-            navBar.current?.focus();
           }}
         >
           +
