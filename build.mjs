@@ -2,9 +2,16 @@
  * Creates additional HTML files for react-router-dom to work correctly.
  */
 import { copyFile, mkdir } from "node:fs/promises";
+import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
+import { copy } from "fs-extra";
+import { fileURLToPath } from "node:url";
 
 const buildURL = new URL("./build/", import.meta.url);
 const indexURL = new URL("index.html", buildURL);
+
+copy(uvPath, fileURLToPath(new URL("./uv/", buildURL)), {
+  overwrite: false,
+});
 
 /**
  * Paths relative to buildURL
