@@ -2,9 +2,9 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 
 const TabApp = lazy(() => import("./pages/index"));
-const SystemHome = lazy(() => import("./pages/system/home"));
-const SystemNewTab = lazy(() => import("./pages/system/newtab"));
-const SystemSettings = lazy(() => import("./pages/system/settings"));
+const AboutHome = lazy(() => import("./pages/about/home"));
+const AboutNewTab = lazy(() => import("./pages/about/newtab"));
+const AboutPreferences = lazy(() => import("./pages/about/preferences"));
 
 export default function App() {
   return (
@@ -20,26 +20,26 @@ export default function App() {
       <Route
         element={
           <Suspense>
-            <SystemHome />
+            <AboutHome />
           </Suspense>
         }
-        path="/system/home.html"
+        path="/about/home.html"
       />
       <Route
         element={
           <Suspense>
-            <SystemNewTab />
+            <AboutNewTab />
           </Suspense>
         }
-        path="/system/newtab.html"
+        path="/about/newtab.html"
       />
       <Route
         element={
           <Suspense>
-            <SystemSettings />
+            <AboutPreferences />
           </Suspense>
         }
-        path="/system/settings.html"
+        path="/about/settings.html"
       />
     </Routes>
   );
