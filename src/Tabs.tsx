@@ -1,3 +1,4 @@
+import BareClient from "@tomphttp/bare-client";
 import clsx from "clsx";
 import type {
   MouseEventHandler,
@@ -10,6 +11,7 @@ import {
   useLayoutEffect,
   useCallback,
   useEffect,
+  useMemo,
   forwardRef,
   useRef,
   useState,
@@ -19,17 +21,31 @@ import type { WebContentRef, Tab } from "./Content";
 import WebContent, { translateOut } from "./Content";
 import styles from "./styles/Tabs.module.scss";
 
-interface TabbingProps {
-  tab: Tab;
-  setTab: (tab: Tab) => void;
-  bumpedTab: number | null;
-  order: number;
-  focused: boolean;
-  tabList: MutableRefObject<HTMLDivElement | null>;
-  bumpTab: (by: number) => boolean;
-  onClick: MouseEventHandler<HTMLDivElement>;
-  onClose: () => void;
-}
+const Icon = ({ src, bareClient }: { src: string; bareClient: BareClient }) => {
+  const formed = new URL(src, global.location.toString());
+  const isData = formed.origin !== global.location.origin;
+  const [icon, setIcon] = useState<void | string>(isData ? undefined : src);
+
+  useEffect(() => {
+    if (!isData) return;
+
+    const abort = new AbortController();
+
+    const promise = (async () => {
+      const outgoing = await bareClient.fetch(src, { signal: abort.signal });
+      const obj = URL.createObjectURL(await outgoing.blob());
+      setIcon(obj);
+      return obj;
+    })();
+
+    return () => {
+      abort.abort();
+      promise.then((obj) => URL.revokeObjectURL(obj));
+    };
+  }, [bareClient, icon, isData, src]);
+
+  return <>{icon && <img src={icon} alt="" className={styles.icon} />}</>;
+};
 
 const Tabbing = ({
   tab,
@@ -40,7 +56,19 @@ const Tabbing = ({
   bumpTab,
   onClick,
   onClose,
-}: TabbingProps) => {
+  bareClient,
+}: {
+  tab: Tab;
+  setTab: (tab: Tab) => void;
+  bumpedTab: number | null;
+  order: number;
+  focused: boolean;
+  tabList: MutableRefObject<HTMLDivElement | null>;
+  bumpTab: (by: number) => boolean;
+  onClick: MouseEventHandler<HTMLDivElement>;
+  onClose: () => void;
+  bareClient: BareClient;
+}) => {
   const [mouseDown, setMouseDown] = useState(false);
   const origin = useRef<[number, number] | null>(null);
   const moving = useRef(false);
@@ -146,7 +174,7 @@ const Tabbing = ({
         setGrabX(event.clientX - event.currentTarget.offsetLeft);
       }}
     >
-      {tab.icon && <img src={tab.icon} alt="" className={styles.icon} />}
+      {tab.icon && <Icon src={tab.icon} bareClient={bareClient} />}
       <span className={styles.title}>{tab.title}</span>
       <button
         className={styles.closeTab}
@@ -268,6 +296,10 @@ const createTab = (src: string, tl: Tab[]): Tab => {
 };
 
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
+  const bareClient = useMemo(
+    () => new BareClient(new URL(__uv$config.bare, global.location.toString())),
+    []
+  );
   const tabList = useRef<HTMLDivElement | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [uiScale, setUiScale] = useState(0);
@@ -343,6 +375,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
     tabbing.push(
       <Tabbing
+        bareClient={bareClient}
         tab={tab}
         setTab={setTab}
         tabList={tabList}
