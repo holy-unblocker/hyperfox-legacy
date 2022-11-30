@@ -24,6 +24,7 @@ export interface Tab {
 export interface WebContentRef {
   back: () => void;
   forward: () => void;
+  reload: () => void;
 }
 
 const systemHome = new URL("./about/home.html", global.location.toString());
@@ -136,13 +137,18 @@ const WebContent = forwardRef<
         const window = iframe.current?.contentWindow;
         if (!window) return;
         const history = getHistory(window);
-        return history.back();
+        history.back();
       },
       forward: () => {
         const window = iframe.current?.contentWindow;
         if (!window) return;
         const history = getHistory(window);
-        return history.forward();
+        history.forward();
+      },
+      reload: () => {
+        const window = iframe.current?.contentWindow;
+        if (!window) return;
+        window.location.reload();
       },
     }),
     []
