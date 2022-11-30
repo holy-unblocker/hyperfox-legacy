@@ -44,14 +44,15 @@ export const translateOut = (url: string) => {
 
   if (u.protocol === "about:" && u.hostname === "") {
     switch (u.pathname) {
-      case "blank":
-        return "about:blank";
       case "home":
         return systemHome.toString() + u.search + u.hash;
       case "newtab":
         return systemNewTab.toString() + u.search + u.hash;
       case "settings":
         return systemSettings.toString() + u.search + u.hash;
+      case "blank":
+      default:
+        return "about:blank";
     }
   }
 
