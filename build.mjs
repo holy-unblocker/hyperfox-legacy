@@ -17,7 +17,7 @@ copy(uvPath, fileURLToPath(new URL("./uv/", buildURL)), {
  * Paths relative to buildURL
  */
 const files = [
-  "system/home.html",
+  "about/home.html",
   "about/newtab.html",
   "about/preferences.html",
 ];
