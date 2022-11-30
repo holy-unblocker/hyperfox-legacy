@@ -49,7 +49,7 @@ export const getDocumentQuerySelector = (document: Document) =>
 export const getDocumentTitle = (document: Document) =>
   documentTitle.get.call(document);
 
-export const getHistory = (context: typeof globalThis) => {
+export const getHistory = (context: Context) => {
   const got = nativeHistory.get.call(context);
 
   return {

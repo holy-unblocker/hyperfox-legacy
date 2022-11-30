@@ -201,6 +201,8 @@ const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
 
     return (
       <div className={styles.navBar}>
+        <button onClick={() => tab?.contentRef.current?.back()}>🠔</button>
+        <button onClick={() => tab?.contentRef.current?.forward()}>➝</button>
         <form
           className={styles.addressBar}
           onSubmit={(event) => {

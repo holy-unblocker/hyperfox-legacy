@@ -3,6 +3,7 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import {
   getDocumentQuerySelector,
   getDocumentTitle,
+  getHistory,
   getHTMLLinkElementHref,
 } from "./contextNatives";
 
@@ -21,8 +22,8 @@ export interface Tab {
 }
 
 export interface WebContentRef {
-  //
-  navigate(): void;
+  back: () => void;
+  forward: () => void;
 }
 
 const systemHome = new URL("./about/home.html", global.location.toString());
@@ -113,16 +114,9 @@ const WebContent = forwardRef<
       const iconSelector = querySelector<HTMLLinkElement>('link[rel*="icon"]');
       const href = iconSelector && getHTMLLinkElementHref(iconSelector);
       if (href) icon = translateIn(href);
-      else
-        try {
-          icon = new URL("/favicon.ico", location).toString();
-        } catch (err) {
-          // :blank?
-          if (realLocation.protocol !== "about:") {
-            // location is possibly about: url
-            icon = new URL("/favicon.ico", realLocation).toString();
-          }
-        }
+      // about pages will provide a link
+      else if (location.protocol !== "about:")
+        icon = new URL("/favicon.ico", location).toString();
 
       setTab({
         ...tab,
@@ -138,8 +132,17 @@ const WebContent = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      navigate: () => {
-        //
+      back: () => {
+        const window = iframe.current?.contentWindow;
+        if (!window) return;
+        const history = getHistory(window);
+        return history.back();
+      },
+      forward: () => {
+        const window = iframe.current?.contentWindow;
+        if (!window) return;
+        const history = getHistory(window);
+        return history.forward();
       },
     }),
     []
