@@ -9,7 +9,11 @@ const indexURL = new URL("index.html", buildURL);
 /**
  * Paths relative to buildURL
  */
-const files = ["system/newTab.html", "system/settings.html"];
+const files = [
+  "system/home.html",
+  "about/newtab.html",
+  "about/preferences.html",
+];
 
 for (const file of files) {
   const output = new URL(file, buildURL);
