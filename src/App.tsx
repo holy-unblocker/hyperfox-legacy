@@ -39,7 +39,7 @@ export default function App() {
             <AboutPreferences />
           </Suspense>
         }
-        path="/about/settings.html"
+        path="/about/preferences.html"
       />
     </Routes>
   );

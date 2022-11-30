@@ -29,8 +29,8 @@ export interface WebContentRef {
 
 const systemHome = new URL("./about/home.html", global.location.toString());
 const systemNewTab = new URL("./about/newtab.html", global.location.toString());
-const systemSettings = new URL(
-  "./about/settings.html",
+const systemPreferences = new URL(
+  "./about/preferences.html",
   global.location.toString()
 );
 
@@ -50,8 +50,8 @@ export const translateOut = (url: string) => {
         return systemHome.toString() + u.search + u.hash;
       case "newtab":
         return systemNewTab.toString() + u.search + u.hash;
-      case "settings":
-        return systemSettings.toString() + u.search + u.hash;
+      case "preferences":
+        return systemPreferences.toString() + u.search + u.hash;
       case "blank":
       default:
         return "about:blank";
@@ -80,8 +80,8 @@ export const translateIn = (url: string) => {
         return "about:home" + u.search + u.hash;
       case systemNewTab.pathname:
         return "about:newtab" + u.search + u.hash;
-      case systemSettings.pathname:
-        return "about:settings" + u.search + u.hash;
+      case systemPreferences.pathname:
+        return "about:preferences" + u.search + u.hash;
     }
   }
 
