@@ -42,7 +42,7 @@ const Icon = ({ src, bareClient }: { src: string; bareClient: BareClient }) => {
       abort.abort();
       promise.then((obj) => URL.revokeObjectURL(obj));
     };
-  }, [bareClient, icon, isData, src]);
+  }, [bareClient, isData, src]);
 
   return <>{icon && <img src={icon} alt="" className={styles.icon} />}</>;
 };
