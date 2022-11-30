@@ -174,44 +174,61 @@ const tabKey = (tabs: Tab[]) => {
   throw new Error("Failure allocating key");
 };
 
-interface NavBarProps {
-  address?: string;
-}
-
 interface NavBarRef {
   focus(): void;
 }
 
-const NavBar = forwardRef<NavBarRef, NavBarProps>(({ address }, ref) => {
-  const [focused, setFocused] = useState(false);
-  const input = useRef<HTMLInputElement | null>(null);
+const NavBar = forwardRef<NavBarRef, { tab?: Tab; setTab: (tab: Tab) => void }>(
+  ({ tab, setTab }, ref) => {
+    const [focused, setFocused] = useState(false);
+    const input = useRef<HTMLInputElement | null>(null);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      focus: () => input.current?.focus(),
-    }),
-    [input]
-  );
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => input.current?.focus(),
+      }),
+      [input]
+    );
 
-  useEffect(() => {
-    if (!input.current) return;
+    useEffect(() => {
+      if (!input.current || !tab) return;
 
-    if (typeof address === "string" && !focused) input.current.value = address;
-  }, [address, focused, input]);
+      if (typeof tab.address === "string" && !focused)
+        input.current.value = tab.address;
+    }, [tab, focused, input]);
 
-  return (
-    <div className={styles.navBar}>
-      <input
-        className={styles.addressBar}
-        type="text"
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        ref={input}
-      />
-    </div>
-  );
-});
+    return (
+      <div className={styles.navBar}>
+        <form
+          className={styles.addressBar}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!input.current || !tab) return;
+            const formed = new URL(input.current.value).toString();
+            const ref =
+              createRef<WebContentRef | null>() as MutableRefObject<WebContentRef | null>;
+            ref.current = null;
+
+            setTab({
+              ...tab,
+              src: translateOut(formed),
+              address: formed,
+              title: formed,
+            });
+          }}
+        >
+          <input
+            type="text"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            ref={input}
+          />
+        </form>
+      </div>
+    );
+  }
+);
 
 const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const tabList = useRef<HTMLDivElement | null>(null);
@@ -230,7 +247,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
         newTabs.push({
           src: translateOut(formed),
           address: formed,
-          title: src,
+          title: formed,
           load: false,
           key: tabKey(newTabs),
           contentRef: ref,
@@ -262,6 +279,13 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     return () => window.removeEventListener("resize", resize);
   }, [tabs]);
 
+  const setSomeTab = (tab: Tab | void, newTab: Tab) => {
+    if (!tab) return;
+    const i = tabs.indexOf(tab);
+    if (i !== -1) tabs[i] = newTab;
+    setTabs([...tabs]);
+  };
+
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
 
@@ -273,11 +297,7 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
       }
     };
 
-    const setTab = (newTab: Tab) => {
-      const i = tabs.indexOf(tab);
-      if (i !== -1) tabs[i] = newTab;
-      setTabs([...tabs]);
-    };
+    const setTab = setSomeTab.bind(null, tab);
 
     const focused = focusedTabKey === tab.key;
 
@@ -314,7 +334,12 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
     content[tab.key] = (
       <div className={clsx(styles.tabContent, focused && styles.focused)}>
         {tab.load && (
-          <WebContent ref={tab.contentRef} tab={tab} setTab={setTab} />
+          <WebContent
+            ref={tab.contentRef}
+            tab={tab}
+            setTab={setTab}
+            key={tab.key}
+          />
         )}
       </div>
     );
@@ -359,7 +384,11 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
         </button>
       </div>
       <div className={styles.browserBar}>
-        <NavBar ref={navBar} address={focusedTab?.address} />
+        <NavBar
+          ref={navBar}
+          tab={focusedTab}
+          setTab={setSomeTab.bind(null, focusedTab)}
+        />
       </div>
       {content}
     </>

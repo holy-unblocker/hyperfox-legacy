@@ -143,7 +143,16 @@
     background-color: #f0f0f4;
     border: none;
     border-radius: 4px;
-    // todo: make a tab-accessibility mode
-    outline: none;
+    display: flex;
+    flex-direction: row;
+
+    > input {
+      // todo: make a tab-accessibility mode
+      outline: none;
+      border: none;
+      background-color: transparent;
+      width: 100%;
+      height: 100%;
+    }
   }
 }
