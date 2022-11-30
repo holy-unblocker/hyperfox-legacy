@@ -363,10 +363,8 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
 
     if (focusedTab.shouldFocus) {
       navBar.current.focusAddressBar();
-      setSomeTab(focusedTab, {
-        ...focusedTab,
-        shouldFocus: false,
-      });
+      // should setSomeTab
+      focusedTab.shouldFocus = false;
     }
   }, [focusedTab, setSomeTab]);
 
@@ -388,9 +386,8 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
             const newTabs = [...tabs];
             const tab = createTab("about:newtab", newTabs);
             newTabs.push(tab);
-            tab.shouldFocus = true;
-            setTabs(tabs);
             focusTab(tab);
+            setTabs(newTabs);
           }}
         >
           +
