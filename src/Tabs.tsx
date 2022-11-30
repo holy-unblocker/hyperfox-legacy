@@ -292,6 +292,13 @@ const Tabs = ({ initialTabs }: { initialTabs?: string[] }) => {
   const setSomeTab = useCallback(
     (tab: Tab | void, newTab: Tab) => {
       if (!tab) return;
+      let updated = false;
+      for (const key in tab)
+        if (tab[key as keyof Tab] !== newTab[key as keyof Tab]) {
+          updated = true;
+          break;
+        }
+      if (!updated) return;
       const i = tabs.indexOf(tab);
       if (i !== -1) tabs[i] = newTab;
       setTabs([...tabs]);
